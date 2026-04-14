@@ -48,19 +48,33 @@
 
 - [x] **T021** — Create `src/cron/scheduler.ts` *(2026-04-14)*
   - setInterval-based, DRY_RUN safe, startup warmup
-- [ ] **T022** — Create `src/lib/webhookDelivery.ts` (PENDING — defer to v1.1)
-- [ ] **T023** — Create `src/routes/webhooks.ts` (PENDING — defer to v1.1)
-- [ ] **T024** — Wire webhook delivery into sync (PENDING — defer to v1.1)
+- [x] **T022** — Create `src/lib/webhookDelivery.ts` *(2026-04-14)*
+  - HMAC sha256 signing, 3 retries with exponential backoff
+- [x] **T023** — Create `src/routes/webhooks.ts` *(2026-04-14)*
+  - POST/GET/DELETE `/v1/admin/webhooks` with Zod validation
+- [x] **T024** — Wire webhook delivery into sync *(2026-04-14)*
+  - `sync.complete` event dispatched after successful sync
 - [x] **T025** — Wire scheduler into `src/index.ts` startup *(2026-04-14)*
 
 ## Phase 6 — Deploy
 
-- [ ] **T026** — Create PostgreSQL database `bigshot_feed` on Dokploy-postgres
-- [ ] **T027** — Create Dokploy app "big-shot-feed" in `services` project
-- [ ] **T028** — Configure env vars + domain `feed.bigshot.arcadia.dauster.xyz`
-- [ ] **T029** — Deploy + verify `curl .../v1/repos`
-- [ ] **T030** — Run first manual sync via `POST /v1/admin/sync`
-- [ ] **T031** — Verify scheduled sync after 1h wait
+- [x] **T026** — Create PostgreSQL database `bigshot_feed` *(2026-04-14)*
+- [x] **T027** — Create Dokploy app "big-shot-feed" *(2026-04-14)*
+  - Source: GitHub https://github.com/diogenesdauster/big-shot-feed (public)
+  - Build type: Dockerfile
+- [x] **T028** — Configure env vars + domain *(2026-04-14)*
+  - Domain: `feed.bigshot.arcadia.dauster.xyz`
+  - SSL: Let's Encrypt
+- [x] **T029** — Deploy + verify API *(2026-04-14)*
+  - `GET /v1/repos` → 200 with 3 repos
+  - `GET /v1/topics?repo=docs-odc` → works
+  - `GET /v1/topics/:path?repo=docs-odc` → returns frontmatter + content
+- [~] **T030** — First manual sync (PARTIAL — rate limit reset pending)
+  - docs-odc: 711 files synced successfully
+  - docs-product: 1694 files synced successfully
+  - docs-howtos: 141 files synced successfully
+  - Full resync after CDN fix pending until GitHub rate limit resets
+- [ ] **T031** — Verify scheduled sync after next cron tick
 
 ## Status Summary
 
