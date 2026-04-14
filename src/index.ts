@@ -5,6 +5,7 @@ import { topicsRouter } from "./routes/topics";
 import { updatesRouter } from "./routes/updates";
 import { reposRouter } from "./routes/repos";
 import { adminRouter } from "./routes/admin";
+import { webhooksRouter } from "./routes/webhooks";
 import { startScheduler } from "./cron/scheduler";
 
 const MODULE = "app";
@@ -20,6 +21,7 @@ app.route("/v1/topics", topicsRouter);
 app.route("/v1/updates", updatesRouter);
 app.route("/v1/repos", reposRouter);
 app.route("/v1/admin", adminRouter);
+app.route("/v1/admin/webhooks", webhooksRouter);
 
 // 404
 app.notFound((c) => c.json({ error: "Not Found" }, 404));

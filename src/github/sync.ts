@@ -5,6 +5,7 @@ import { env } from "../env";
 import { octokit, checkRateLimit } from "./client";
 import { parseToc } from "./parseToc";
 import { parseMarkdown } from "./parseMarkdown";
+import { notifyWebhooks } from "../lib/webhookDelivery";
 import type { Repo } from "../db/schema";
 
 const MODULE = "sync";
@@ -104,6 +105,9 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
     let filesAdded = 0;
     let filesModified = 0;
     let filesDeleted = 0;
+    const addedPaths: string[] = [];
+    const modifiedPaths: string[] = [];
+    const deletedPaths: string[] = [];
 
     // Parse toc.yml first if changed (so parentPath is correct)
     const tocChanged = changedFiles.some((f) => f.path === "toc.yml");
@@ -133,6 +137,7 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
           .delete(schema.topics)
           .where(and(eq(schema.topics.repoId, repo.id), eq(schema.topics.path, file.path)));
         filesDeleted++;
+        deletedPaths.push(file.path);
         continue;
       }
 
@@ -166,6 +171,7 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
             lastUpdatedAt: new Date(),
           });
           filesAdded++;
+          addedPaths.push(file.path);
         } else {
           await db
             .update(schema.topics)
@@ -181,6 +187,7 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
             })
             .where(and(eq(schema.topics.repoId, repo.id), eq(schema.topics.path, file.path)));
           filesModified++;
+          modifiedPaths.push(file.path);
         }
       } catch (err) {
         logWarn(MODULE, `Failed to process file`, { repo: repo.slug, file: file.path, error: String(err) });
@@ -215,6 +222,23 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
       .where(eq(schema.syncRuns.id, run.id));
 
     log(MODULE, `Sync complete`, { repo: repo.slug, filesAdded, filesModified, filesDeleted });
+
+    // Notify webhooks if anything changed
+    if (filesAdded + filesModified + filesDeleted > 0) {
+      try {
+        await notifyWebhooks({
+          event: "sync.complete",
+          repo: repo.slug,
+          added: addedPaths,
+          modified: modifiedPaths,
+          deleted: deletedPaths,
+          commitSha: newSha,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (err) {
+        logWarn(MODULE, "Webhook dispatch failed", { error: String(err) });
+      }
+    }
 
     return { repoSlug: repo.slug, status: "success", filesAdded, filesModified, filesDeleted };
   } catch (err) {
