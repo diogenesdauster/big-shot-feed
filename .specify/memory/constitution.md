@@ -72,6 +72,28 @@ Detectar falhas MUST ser automático, não manual.
 
 ---
 
+### VI. API vs CDN Discipline (NON-NEGOTIABLE)
+
+GitHub API (e equivalentes) é para **metadata e mutations**; CDNs são para **bulk content reads**.
+Usar API para ler centenas de ficheiros é receita para rate limits e latência desnecessária.
+
+- **GitHub API** (Octokit) MUST ser usado APENAS para:
+  - Listar árvores (`getTree`) — 1 request retorna N ficheiros
+  - Descobrir commits (`getCommit`, `compareCommits`) — 1 request com metadata
+  - Webhooks, releases, issues — operações de controlo
+- **raw.githubusercontent.com** MUST ser usado para ler conteúdo de ficheiros individuais de repos públicos — sem rate limit, mesmo CDN que `git clone` usa por baixo
+- Nenhum sync MUST chamar `repos.getContent()` em loop para N ficheiros — é o anti-padrão #1
+- Cálculo obrigatório no `plan.md`: **requests API × syncs/hora vs 5000/h limit** antes de implementar
+- Qualquer bulk read futuro (S3, DockerHub, qualquer CDN-backed store) MUST seguir a mesma regra
+
+**Métrica antes/depois no big-shot-feed**:
+```
+ANTES: ~2600 requests/sync × 3 tentativas/hora = 7800 → rate limit stuck
+DEPOIS: ~3 requests/sync × N tentativas = ilimitado na prática
+```
+
+---
+
 ## Stack Constraints
 
 - **Runtime**: Bun (TypeScript native, rápido startup)

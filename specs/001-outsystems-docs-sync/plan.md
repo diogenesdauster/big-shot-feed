@@ -12,6 +12,26 @@
 | III. Cache-First | PASS | All reads serve from PostgreSQL; sync runs in background |
 | IV. Deduplication | PASS | Primary key = `(repo_id, path)` — natural uniqueness |
 | V. Health Monitoring | PASS | `sync_runs` table + health endpoint |
+| VI. API vs CDN Discipline | PASS | Metadata via Octokit, content via raw.githubusercontent.com |
+
+## Rate Limit Budget
+
+**GitHub API** (5000/h authenticated):
+
+| Operation | Calls per sync | Syncs per hour | Total |
+|-----------|----------------|----------------|-------|
+| `getCommit` (current SHA) | 1/repo × 3 repos | 1 | 3 |
+| `getTree` (initial only) | 1/repo × 3 repos (first run) | 1 | 3 (one-time) |
+| `compareCommits` (delta) | 1/repo × 3 repos | 1 | 3 |
+| `checkRateLimit` (guard) | 1/sync | 1 | 1 |
+| **Total per hourly sync** | | | **~7 requests** |
+
+**Budget usage**: 7/5000 = 0.14% per hour. Supports >700 ad-hoc syncs/hour if needed.
+
+**Raw CDN** (`raw.githubusercontent.com`):
+- No rate limit for public repos
+- Used for ALL file content reads (toc.yml, .md files)
+- Average sync: ~30 files changed, ~30 CDN requests, no impact on API budget
 
 ## Technical Context
 

@@ -24,10 +24,14 @@ Output: `GET /v1/news?since=2026-04-01&source=blog-outsystems`
 | Runtime | Bun |
 | Framework | Hono |
 | DB | PostgreSQL 16 (Drizzle ORM, schema `bigshot_feed`) |
-| HTTP parsing | cheerio + fast-xml-parser |
-| Cron | node-cron |
+| GitHub metadata | Octokit (`@octokit/rest`) |
+| GitHub content | `raw.githubusercontent.com` (unlimited CDN) |
+| Markdown parsing | gray-matter + js-yaml |
+| Cron | Bun interval |
 | Validation | Zod |
 | Deploy | Dokploy on Arcadia VM |
+
+**Architecture note**: Metadata (commits, tree) goes through Octokit; file content bypasses the API entirely via raw CDN. See `docs/TROUBLESHOOTING.md` #4 for the full story and Principle VI in the constitution.
 
 ## Development
 
