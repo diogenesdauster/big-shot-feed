@@ -69,12 +69,16 @@
   - `GET /v1/repos` → 200 with 3 repos
   - `GET /v1/topics?repo=docs-odc` → works
   - `GET /v1/topics/:path?repo=docs-odc` → returns frontmatter + content
-- [~] **T030** — First manual sync (PARTIAL — rate limit reset pending)
-  - docs-odc: 711 files synced successfully
-  - docs-product: 1694 files synced successfully
-  - docs-howtos: 141 files synced successfully
-  - Full resync after CDN fix pending until GitHub rate limit resets
-- [ ] **T031** — Verify scheduled sync after next cron tick
+- [x] **T030** — First manual sync *(2026-04-14)*
+  - Clean sync via raw CDN, zero API calls consumed
+  - docs-odc: 751 files
+  - docs-product: 1676 files
+  - docs-howtos: 138 files
+  - **Total: 2565 topics** sincronizados
+- [x] **T031** — Scheduler verified *(2026-04-14)*
+  - Runs hourly via Bun setInterval
+  - Single-flight guard prevents concurrent runs
+  - DRY_RUN check on startup
 
 ## Status Summary
 
