@@ -6,7 +6,8 @@ const MODULE = "seed";
 
 const REPOS = [
   { slug: "docs-odc", owner: "OutSystems", name: "docs-odc", branch: "main" },
-  { slug: "docs-product", owner: "OutSystems", name: "docs-product", branch: "main" },
+  // docs-product uses "master" (legacy branch name)
+  { slug: "docs-product", owner: "OutSystems", name: "docs-product", branch: "master" },
   { slug: "docs-howtos", owner: "OutSystems", name: "docs-howtos", branch: "main" },
 ];
 

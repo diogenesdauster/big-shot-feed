@@ -75,7 +75,12 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
         recursive: "true",
       });
       changedFiles = tree.tree
-        .filter((entry) => entry.type === "blob" && entry.path && (entry.path.endsWith(".md") || entry.path === "toc.yml"))
+        .filter((entry) => {
+          if (entry.type !== "blob" || !entry.path) return false;
+          if (entry.path === "toc.yml") return true;
+          // Only include .md files inside src/ — skip .github/, .cursor/, styles/, etc.
+          return entry.path.startsWith("src/") && entry.path.endsWith(".md");
+        })
         .map((entry) => ({ path: entry.path as string, status: "added" }));
     } else {
       // Delta sync — compare two commits
@@ -86,7 +91,11 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
         basehead: `${oldSha}...${newSha}`,
       });
       changedFiles = (compare.files ?? [])
-        .filter((f) => f.filename && (f.filename.endsWith(".md") || f.filename === "toc.yml"))
+        .filter((f) => {
+          if (!f.filename) return false;
+          if (f.filename === "toc.yml") return true;
+          return f.filename.startsWith("src/") && f.filename.endsWith(".md");
+        })
         .map((f) => ({ path: f.filename, status: f.status }));
     }
 
