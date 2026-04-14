@@ -24,8 +24,10 @@ export async function getRateLimit(): Promise<{ remaining: number; reset: Date }
 export async function checkRateLimit(): Promise<boolean> {
   try {
     const { remaining, reset } = await getRateLimit();
-    if (remaining < 10) {
-      logWarn(MODULE, "Rate limit exhausted, waiting until reset", { remaining, reset });
+    // Each sync only needs ~3 API calls (getCommit + getTree + compareCommits).
+    // File content is fetched via raw CDN (no rate limit).
+    if (remaining < 3) {
+      logWarn(MODULE, "Rate limit too low for sync, skipping", { remaining, reset });
       return false;
     }
     if (remaining < 100) {
