@@ -231,17 +231,16 @@ export async function syncRepo(repo: Repo): Promise<SyncResult> {
 }
 
 /**
- * Fetches raw file content at a specific ref.
+ * Fetches raw file content via raw.githubusercontent.com.
+ * This bypasses GitHub API rate limits entirely (raw CDN is unlimited for public repos).
  */
 async function fetchFileContent(owner: string, repo: string, path: string, ref: string): Promise<string> {
-  const { data } = await octokit.repos.getContent({ owner, repo, path, ref });
-  if (Array.isArray(data) || data.type !== "file") {
-    throw new Error(`Path is not a file: ${path}`);
+  const url = `https://raw.githubusercontent.com/${owner}/${repo}/${ref}/${path}`;
+  const resp = await fetch(url);
+  if (!resp.ok) {
+    throw new Error(`Failed to fetch ${url}: ${resp.status} ${resp.statusText}`);
   }
-  if (!("content" in data)) {
-    throw new Error(`No content in response for ${path}`);
-  }
-  return Buffer.from(data.content, "base64").toString("utf-8");
+  return resp.text();
 }
 
 /**
