@@ -20,4 +20,4 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app ./
 
 EXPOSE 3001
-CMD ["sh", "-c", "bunx drizzle-kit migrate && bun src/index.ts"]
+CMD ["sh", "-c", "bun src/db/migrate.ts && bun src/db/seed.ts && bun src/index.ts"]
