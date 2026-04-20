@@ -165,3 +165,26 @@ curl -X POST https://arcadia.dauster.xyz/api/trpc/application.deploy \
 **Regra**: Após actualizar env vars no Dokploy, MUST fazer `application.deploy` explícito — não confiar em `docker service update --force`.
 
 **Data**: 2026-04-14
+
+---
+
+## 7. API pública sem rate limiting
+
+**Sintoma**: Web assessment mostra 50/50 requests sequenciais todos 200 em `/v1/repos`. Sem protecção contra DoS.
+
+**Causa**: Hono não tem rate limiting built-in. Nenhum middleware de proteção configurado.
+
+**Solução**: Criar middleware `src/lib/rateLimit.ts` com sliding window in-memory e aplicar no `index.ts`:
+```typescript
+import { rateLimit } from "./lib/rateLimit";
+
+// Aplicar antes das rotas
+app.use("/v1/topics/*", rateLimit(50, 10_000));  // 50 req/10s
+app.use("/v1/repos/*", rateLimit(50, 10_000));
+app.use("/v1/updates/*", rateLimit(50, 10_000));
+app.use("/v1/admin/*", rateLimit(10, 10_000));   // 10 req/10s (admin)
+```
+
+**Regra**: Toda API pública MUST ter rate limiting como primeiro middleware. Para Hono: `app.use("/path/*", rateLimit(max, windowMs))`. Testar com requests paralelos, não sequenciais.
+
+**Data**: 2026-04-20
